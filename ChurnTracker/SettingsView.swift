@@ -1,10 +1,15 @@
 import SwiftUI
+import SwiftData
 import UserNotifications
 
 struct SettingsView: View {
     @Environment(\.modelContext) private var modelContext
-    @AppStorage("didSeedSampleData") private var didSeedSampleData = false
+    @Query private var offers: [ChurnOffer]
     @State private var notificationStatus = "Unknown"
+
+    private var canInsertSampleData: Bool {
+        offers.isEmpty
+    }
 
     var body: some View {
         NavigationStack {
@@ -24,11 +29,15 @@ struct SettingsView: View {
                     Button("Insert Sample Offers") {
                         do {
                             try SampleData.insertIfNeeded(in: modelContext)
-                            didSeedSampleData = true
                         } catch {
                             print("Failed to insert sample data: \(error)")
                         }
                     }
+                    .disabled(!canInsertSampleData)
+
+                    Text(canInsertSampleData ? "Sample offers are optional and only insert into an empty tracker." : "Sample offers are only available before you add real offers.")
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
                 }
 
                 Section("About") {
