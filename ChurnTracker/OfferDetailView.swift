@@ -180,6 +180,8 @@ struct OfferDetailView: View {
 
         if offer.requirements.allSatisfy(\.isComplete) && !offer.requirements.isEmpty && offer.status == .inProgress {
             offer.status = .waitingForBonus
+        } else if !offer.requirements.allSatisfy(\.isComplete) && offer.status == .waitingForBonus {
+            offer.status = .inProgress
         }
 
         try? modelContext.save()
@@ -187,19 +189,25 @@ struct OfferDetailView: View {
 
     private func importAttachments(from items: [PhotosPickerItem]) async {
         guard !items.isEmpty else { return }
+        var importedAttachmentCount = 0
 
         for item in items {
             do {
                 if let attachment = try await AttachmentStore.shared.importAttachment(from: item, for: offer) {
                     offer.attachments.append(attachment)
+                    importedAttachmentCount += 1
                 }
             } catch {
                 print("Attachment import failed: \(error)")
             }
         }
 
-        offer.addEvent(.noteAdded, title: "Added screenshot attachment")
-        try? modelContext.save()
+        if importedAttachmentCount > 0 {
+            let title = importedAttachmentCount == 1 ? "Added screenshot attachment" : "Added \(importedAttachmentCount) screenshot attachments"
+            offer.addEvent(.noteAdded, title: title)
+            try? modelContext.save()
+        }
+
         selectedItems = []
     }
 }

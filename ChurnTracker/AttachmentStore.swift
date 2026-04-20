@@ -1,5 +1,6 @@
 import Foundation
 import PhotosUI
+import SwiftUI
 
 final class AttachmentStore {
     static let shared = AttachmentStore()
